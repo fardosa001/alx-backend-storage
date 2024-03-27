@@ -15,7 +15,8 @@ def get_page(url: str) -> str:
     resp = requests.get(url)
     content = resp.text
 
-    redis_client.setex(url, 10, content)
+    redis_client.setex((f"cached:{url}", 10,
+                        redis_client.get(f"cached:{url}")))
 
     return content
 
