@@ -6,16 +6,7 @@ from typing import Union, Callable
 from functools import wraps
 
 
-class Cache:
-    """cache class"""
-    def __init__(self):
-        """store an instance of the Redis client as a
-        private variable named _redis (using redis.Redis())
-        and flush the instance using flushdb."""
-        self._redis = redis.Redis()
-        self._redis.flushdb()
-
-    def count_calls(method: Callable) -> Callable:
+def count_calls(method: Callable) -> Callable:
         """ to count how many times methods of the Cache class are called """
         key = method.__qualname__
 
@@ -26,6 +17,15 @@ class Cache:
             self._redis.incr(key)
             return method(self, *args, **kwds)
         return wrapper
+
+class Cache:
+    """cache class"""
+    def __init__(self):
+        """store an instance of the Redis client as a
+        private variable named _redis (using redis.Redis())
+        and flush the instance using flushdb."""
+        self._redis = redis.Redis()
+        self._redis.flushdb()
 
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
