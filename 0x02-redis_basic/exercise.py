@@ -2,21 +2,37 @@
 """Writing strings to Redis"""
 import redis
 import uuid
-from typing import Union, Callable
+from typing import Union, Callable, Optional, Any
 from functools import wraps
 
 
-def count_calls(method: Callable) -> Callable:
-        """ to count how many times methods of the Cache class are called """
-        key = method.__qualname__
+def call_history(method: Callable) -> Callable:
+    """ store the history of inputs and outputs for a particular function """
+    key_inputs = method.__qualname__ + ":inputs"
+    key_outputs = method.__qualname__ + ":outputs"
 
-        @wraps(method)
-        def wrapper(self, *args, **kwds):
-            """wrapped method"""
-            key = method.__qualname__
-            self._redis.incr(key)
-            return method(self, *args, **kwds)
-        return wrapper
+    @wraps(method)
+    def wrapper(self, *args, **kwds):
+        """ wrapped method"""
+        self._redis.rpush(key_inputs, str(args))
+        data = method(self, *args, **kwds)
+        self._redis.rpush(key_outputs, str(data))
+        return data
+    return wrapper
+
+
+def count_calls(method: Callable) -> Callable:
+    """ to count how many times methods of the Cache class are called """
+    key = method.__qualname__
+
+    @wraps(method)
+    def wrapper(self, *args, **kwds):
+        """wrapped method"""
+        key = method.__qualname__
+        self._redis.incr(key)
+        return method(self, *args, **kwds)
+    return wrapper
+
 
 class Cache:
     """cache class"""
@@ -27,6 +43,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @call_history
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """generates a random key (e.g. using uuid),
