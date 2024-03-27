@@ -22,6 +22,7 @@ class Cache:
         @wraps(method)
         def wrapper(self, *args, **kwargs):
             """wrapped method"""
+            key = method.__qualname__
             self._redis.incr(key)
             return method(self, *args, **kwargs)
         return wrapper
