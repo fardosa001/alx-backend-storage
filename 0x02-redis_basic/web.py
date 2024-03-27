@@ -12,8 +12,8 @@ def get_page(url: str) -> str:
     "count:{url}" and cache the result with an
     expiration time of 10 seconds """
     redis_client.set(f"cached:{url}", count)
-    redis_client.incr(f"count:{url}")
     resp = requests.get(url)
+    redis_client.incr(f"count:{url}")
     redis_client.setex(f"cached:{url}", 10,
                        redis_client.get(f"cached:{url}"))
 
