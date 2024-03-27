@@ -20,11 +20,11 @@ class Cache:
         key = method.__qualname__
 
         @wraps(method)
-        def wrapper(self, *args, **kwargs):
+        def wrapper(self, *args, **kwds):
             """wrapped method"""
             key = method.__qualname__
             self._redis.incr(key)
-            return method(self, *args, **kwargs)
+            return method(self, *args, **kwds)
         return wrapper
 
     @count_calls
